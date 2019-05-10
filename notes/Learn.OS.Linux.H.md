@@ -1,6 +1,6 @@
 # LICENSE
 
-* **Author**: github.com/maxthon147532
+* **Author**: github.com/linqiongshan
 
 * **本作品采用 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a> 进行许可**
 
@@ -110,41 +110,49 @@
   done
   ```
 
-  ## ssh
 
-# Linux 系统使用
+## ssh
 
-## 系统配置
+ssh-keygen
 
-### core
+## crontab / 系统定时任务
 
-#### 配置 core 文件生成路径
+* Linux 下，通过系统服务 crond ，进行用户级的定时任务管理。crontab 则是增删改
 
-* **配置文件路径**：
+## sed
 
-  /proc/sys/kernel/core_pattern
+### 快速使用总结
 
-* **默认生成路径**：输入可执行文件运行命令的同一路径下
+- **文件内行内容替换**
 
-* **默认生成名字**：默认命名为core。新的core文件会覆盖旧的core文件
+  ```bash
+  sed -i "s/NGBILLING_HOME=.*/NGBILLING_HOME=\$\(HOME\)/g" "$NGBILLING_SRC/MakeCommon"
+  ```
 
-* **配置修改方式**
-  * echo "/corefile/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
-  * sysctl -w kernel.core_pattern=/tmp/zcore/core.%e.%h.%p.%t
+  * -i ：默认情况下，sed 将指定文件作为输入进行修改后，内容输出到控制台，不会修改源文件。使用 -i 选项表示 inplace 操作，直接修改源文件
+  
+  * 内容的搜索替换基本格式： "s/<要匹配的内容，支持正则>/<要替换成的内容>/g"
+  
+  * 最后是 sed 要处理的文件名
+  
+  * 匹配的内容：可以使用 ^ 符号，表示从行起始位置开始匹配；用 $ 符号表示行结束位置（实质就是正则表达式语法）
+  
+    e.g.：
+  
+    ​	sed "s/abc/123/g" ，会将 abc 替换为 123
+  
+    ​	sed "s/^abc/123/g"  则只替换行起始位置是 abc 的情况
 
-* **配置格式说明符**
-  * %p - insert pid into filename 添加pid(进程id)
-  * %u - insert current uid into filename 添加当前uid(用户id)
-  * %g - insert current gid into filename 添加当前gid(用户组id)
-  * %s - insert signal that caused the coredump into the filename 添加导致产生core的信号
-  * %t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间 
-  * %h - insert hostname where the coredump happened into filename 添加主机名
-  * %e - insert coredumping executable name into filename 添加导致产生core的命令名
+- **行后添加内容**
 
-#### 测试 core 文件能否生成
+  ```bash
+  sed -i "s/CXXFLAGS =.*/\0 -std=c++11/g" "Makefile" 
+  ```
 
-* kill -s SIGSEGV $$
+  使用文本替换。在替换的时候，引用原始数据。
 
-#### 扩展：docker 容器中进行配置
+  “\0”表示前面 regular expression 模式匹配的字串标记。\0 是整个字串，也可以用 \1 \2 等引用其它字串
 
-* 在 docker 容器中，/proc/sys/kernel/core_pattern 是直接使用宿主机的文件。容器中不能修改此文件。修改宿主机的配置，容器中会使用宿主机的配置
+  sed -i "s/\(S\[\"CXX\"\]=.*\)\"/\1 -std=c++11\"/g" "config.status" 
+
+  **注意：字串匹配时，圆括号

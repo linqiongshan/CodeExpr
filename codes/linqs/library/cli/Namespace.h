@@ -1,0 +1,9 @@
+#ifndef _9C91EFED_B134_14C2_1581_A233801CDD57
+#define _9C91EFED_B134_14C2_1581_A233801CDD57
+
+#define _9C91EFED_B134_14C2_1581_A233801CDD57_NS using namespace linqs::library::cli;
+#define _9C91EFED_B134_14C2_1581_A233801CDD57_NS_BEGIN namespace linqs { namespace library { namespace cli {
+#define _9C91EFED_B134_14C2_1581_A233801CDD57_NS_END }}}
+
+
+#endif /* _9C91EFED_B134_14C2_1581_A233801CDD57 */

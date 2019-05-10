@@ -1,6 +1,6 @@
 # LICENSE
 
-* **Author**: github.com/maxthon147532
+* **Author**: github.com/linqiongshan
 
 * **本作品采用 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a> 进行许可**
 
@@ -8,17 +8,22 @@
 
 # 快速查找手册
 
-## 函数速查
+## 函数/类型速查
 
-| 库                                               | 标准  | 用途       | 内容                                                         |
-| ------------------------------------------------ | ----- | ---------- | ------------------------------------------------------------ |
-| \<sstream>                                       | C++   | 字符串流   | std::ostringstream                                           |
-| <sys/time.h>                                     | POSIX |            | -- struct timeval <br />-- ~~gettimeofday~~ 【**过时**：POSIX.1-2008 将此函数标记为过时（obsolete），替代函数，clock_gettime】 |
-| #include <sys/types.h><br/>#include <sys/stat.h> | POSIX |            | -- mode_t umask(mode_t mask); //设置默认的文件创建权限掩码   |
-| <unistd.h>                                       | POSIX |            | * sleep ： `unsigned int sleep(unsigned int seconds)`        |
-| <signal.h>                                       | C     |            |                                                              |
-| <iconv.h>                                        | POSIX | 字符集转换 | iconv_open, iconv, iconv_close, iconv_t                      |
-| <a href="#C_IO_FILE"><stdio.h></a>               | C     |            | -- FILE （type name） <br />-- fopen，fclose，fread，fwrite，ffush <br />-- fdopen 【使用文件描述符生成 FILE 对象】<br />-- freopen<br />-- fileno 【获取 FILE 对象使用的文件描述符】 |
+| 函数/类型定义                                                | 用途                                                         | 标准    | 依赖                                             |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------- | ------------------------------------------------ |
+| std::ostringstream                                           |                                                              | C++     | <sstream>                                        |
+| std::cout<br />std::endl                                     |                                                              | C++     | <iostream>                                       |
+| struct timeval                                               |                                                              | POSIX   | <sys/time.h>                                     |
+| ~~gettimeofday()~~                                           | 【**过时**：POSIX.1-2008 将此函数标记为过时（obsolete），替代函数，clock_gettime】 | POSIX   | <sys/time.h>                                     |
+| mode_t umask(mode_t mask);                                   | 设置默认的文件创建权限掩码                                   | POSIX   | #include <sys/types.h><br/>#include <sys/stat.h> |
+| unsigned int sleep(unsigned int seconds)                     |                                                              | POSIX   | <unistd.h>                                       |
+| iconv_open, iconv, iconv_close, iconv_t                      | 字符集转换                                                   | POSIX   | <iconv.h>                                        |
+| -- FILE （type name） <br />-- fopen，fclose，fread，fwrite，ffush <br />-- fdopen 【使用文件描述符生成 FILE 对象】<br />-- freopen<br />-- fileno 【获取 FILE 对象使用的文件描述符】 |                                                              | C       | <stdio.h>                                        |
+| va_start<br/>va_end<br/>va_arg<br/>va_copy<br/><br/>va_list  | 变长参数                                                     | C       | <stdarg.h>                                       |
+| strerror                                                     |                                                              | C/POSIX | <string.h>                                       |
+| pid_t fork(void);                                            | 创建子进程                                                   | POSIX   | <unistd.h>                                       |
+| int chdir(const char *path);<br/>int fchdir(int fd);         | change working directory                                     | POSIX   | <unistd.h>                                       |
 
 * References
   * [gettimeofday](https://linux.die.net/man/2/gettimeofday)
@@ -66,6 +71,9 @@
 ##### std::thread
 
 * 类型：类
+* 绑定回调接口
+* 方法：
+  * join
 
 ##### std::thread::id
 
@@ -73,7 +81,7 @@
 
 * 序列化：该类型重载了 << 操作符，所以可以通过 << 将对象序列化为字符串
 
-* 序列化示例：
+  序列化示例：
 
   ```cpp
   std::string getThreadId()
@@ -83,6 +91,7 @@
       return s.str();
   }
   ```
+
 
 ##### std::this_thread::get_id
 
@@ -200,7 +209,33 @@ stdarg 中的函数，在多数系统上，是通过宏实现的，不是真正�
 
 ## IO
 
-### FILE （stdio.h）<span id="C_IO_FILE"> A </span>
+### C++ IO Stream
+
+* 类派生关系
+
+  ```mermaid
+  graph TD
+  
+  linkStyle default interpolate basis
+  
+  title[<b>IO Stream 类派生视图</b>]
+  style title fill:#FFF,stroke:#FFF
+  
+  base[ios_base] --> ios[ios]
+  ios --> istream[istream]
+  istream --> ifsream[ifstream]
+  istream --> iss[istringstream]
+  istream --> iostream[iostream]
+  
+  ios --> ostream[ostream]
+  ostream --> iostream
+  ostream --> ofstream[ofstream]
+  ostream --> oss[ostringstream]
+  ```
+
+
+
+### FILE （stdio.h）
 
 #### 接口
 
@@ -354,6 +389,22 @@ getopt 的运行涉及到全局变量：optind, optarg
 * getopt 是多线程不安全的
 * **如果多次调用 getopt，需要自己重置 optind 为 0**，否则每次 getopt 都是从上次结束的位置开始，导致无法获取期望的参数
 
+## fork
+
+### 注意事项
+
+#### 父子进程资源继承
+
+* 子进程不继承父进程的子线程：fork 后子进程只会有一个线程，即子进程自身
+
+# Linux 系统编程
+
+## 典型场景
+
+### 守护进程创建方式
+
+
+
 # 最佳实践
 
 ## 故障处理
@@ -495,61 +546,4 @@ getopt 的运行涉及到全局变量：optind, optarg
 
       e.g.：
 
-      ```cpp
-      long double pi = 3.1415;
-      
-      int a{pi}; //编译器会报错：使用了初始化列表，用浮点数值初始化整数值，可能导致精度损失
-      
-      int b(pi); //编译器不会报错：会进行隐式类型转换，并且信息发生丢失（精度损失）
-      int c = pi; //编译器不会报错：会进行隐式类型转换，并且信息发生丢失（精度损失）
-      ```
-
-    * 语法
-
-  * 默认初始化：default initialized
-
-    定义于任何函数体之外的变量，会被初始化为0
-
-  * 未初始化：uninitialized
-
-    **定义在函数体内部的内置类型变量，如果没有显示进行初始化，则改变化不会被初始化，值是未定义的**
-
-  * 类初始化
-
-    类的初始化由类的构造函数进行约束。通过构造函数，类可以约束是否提供默认初始化方式，还是必须显示初始化。
-
-    任何情况下，创建一个类对象，都回触发一个显示或隐式定义的构造函数
-
-## 引用
-
-### 数据类型引用
-
-* 不能定义元素是引用的数据
-
-  [外部参考文档](<https://blog.csdn.net/fukaibo121/article/details/76473333>)
-
-* 可以定义数组的引用，e.g.：
-
-  ```cpp
-  int ori[2][2] = { 1, 2, 3, 4};
-  int (&ref)[2][2] = ori;
-  ```
-
-  * 声明数组引用变量时，必须加括号，表示 ref 是一个引用类型，引用的是 `[2][2]` 数组。
-
-    如果不加引号，`int &ref[2][2]` 会被理解为试图定义一个 `[2][2]` 的数组，数组元素是 int 类型的应用，这会导致编译错误。
-
-  * 声明数组引用变量时，引用变量的数组长度声明必须和要引用的目标数组完全一致
-
-    e.g.：一下时错误的引用方式
-
-    ```cpp
-    int ori[2][2] = {1,2,3,4};
-    int (&errorRef)[2][3] = ori;
-    ```
-
-    
-
-# 参考文档
-
-* C++ Primer 5th Edition
+      ```cpp
