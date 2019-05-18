@@ -155,4 +155,151 @@ ssh-keygen
 
   sed -i "s/\(S\[\"CXX\"\]=.*\)\"/\1 -std=c++11\"/g" "config.status" 
 
-  **注意：字串匹配时，圆括号
+  **注意：字串匹配时，圆括号 () 也需要加转义字符**
+
+## netperf
+
+网络性能统计工具
+
+* HP：[Github](https://github.com/HewlettPackard/netperf)
+
+* Linux（CentOS）安装记录：源码安装
+
+  > 1. 从 Github 下载最新版本（zip 压缩包）。成文时（2019年5月10日）最新版本为 2.7.0
+  >
+  > 2. 上传到目标主机
+  >
+  > 3. 解压： `unzip netperf-netperf-2.7.0.zip`
+  >
+  > 4. 进入代码目录，执行 configure
+  >
+  >    `./configure --prefix 安装目录绝对路径`
+  >
+  > 5. 编译安装
+  >
+  >    在代码目录下，执行 `make all install` 编译完成后，会将 bin 文件安装到上一步指定的安装目录下
+
+* 快速性能测试简易说明
+
+  * 服务端
+
+    ```bash
+    netserver -4 -p 9991
+    
+    #启动后，netserver 会进入守护模式。如需停止，要自行 ps 查看 pid，kill 之
+    # -4: 使用 IPv4
+    # -p 9991: 指定服务端使用的监听端口。可以修改，不能和主机其它服务端口冲呕吐
+    ```
+
+  * 客户端
+
+    ```bash
+    netperf -t TCP_RR -H 10.45.44.134 -p 9991 -- -O "THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY" -r 256,4096 
+    netperf -t TCP_RR -H 10.45.44.134 -p 9991 -- -O "THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY" -r 1024,8192 
+    netperf -t TCP_RR -H 10.45.44.134 -p 9991 -- -O "THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY" -r 1024,65536
+    netperf -t TCP_RR -H 10.45.44.134 -p 9991 -- -O "THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY" -r 1024,524288
+    
+    #模拟 MQ 消息交互场景进行性能测试
+    # -H netserver运行所在的主机IP
+    # -p netserver监听的端口
+    # -t TCP_RR 和 -r requSize,respSize 模拟MQ消息包交互
+    # -O 设置输出格式
+    
+    Throughput Throughput Minimum      Maximum      Mean
+               Units      Latency      Latency      Latency
+                          Microseconds Microseconds Microseconds
+    
+    6168.49    Trans/s    144          1116         161.73
+    
+    Throughput Throughput Minimum      Maximum      Mean
+               Units      Latency      Latency      Latency
+                          Microseconds Microseconds Microseconds
+    
+    4962.22    Trans/s    191          367          201.12
+    
+    Throughput Throughput Minimum      Maximum      Mean
+               Units      Latency      Latency      Latency
+                          Microseconds Microseconds Microseconds
+    
+    1419.73    Trans/s    685          3690         703.74
+    
+    Throughput Throughput Minimum      Maximum      Mean
+               Units      Latency      Latency      Latency
+                          Microseconds Microseconds Microseconds
+    
+    216.99     Trans/s    4581         4960         4607.65
+    
+    ```
+
+* 程序使用说明
+
+  * netserver
+  * netperf
+
+# Linux 系统使用
+
+## 系统配置
+
+### core
+
+#### 配置 core 文件生成路径
+
+* **配置文件路径**：
+
+  /proc/sys/kernel/core_pattern
+
+* **默认生成路径**：输入可执行文件运行命令的同一路径下
+
+* **默认生成名字**：默认命名为core。新的core文件会覆盖旧的core文件
+
+* **配置修改方式**
+  * echo "/corefile/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
+  * sysctl -w kernel.core_pattern=/tmp/zcore/core.%e.%h.%p.%t
+
+* **配置格式说明符**
+  * %p - insert pid into filename 添加pid(进程id)
+  * %u - insert current uid into filename 添加当前uid(用户id)
+  * %g - insert current gid into filename 添加当前gid(用户组id)
+  * %s - insert signal that caused the coredump into the filename 添加导致产生core的信号
+  * %t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间 
+  * %h - insert hostname where the coredump happened into filename 添加主机名
+  * %e - insert coredumping executable name into filename 添加导致产生core的命令名
+
+#### 测试 core 文件能否生成
+
+* kill -s SIGSEGV $$
+
+#### 扩展：docker 容器中进行配置
+
+* 在 docker 容器中，/proc/sys/kernel/core_pattern 是直接使用宿主机的文件。容器中不能修改此文件。修改宿主机的配置，容器中会使用宿主机的配置
+
+# BASH
+
+
+
+## 实用技巧汇总
+
+* 正则表达式匹配
+
+  使用 <kbd>=~</kbd> 表示按正则表达式规则进行比较
+
+  ```bash
+  # ^ 表示从字符串开始位置比较。 & 表示字符串末尾
+  # ^[0-9]{8}$ 表示字符串要严格是8个数字（0~9）组成的
+  if [[ $_fileBasename =~ ^[0-9]{8}$ ]]
+  then
+  
+  fi
+  ```
+
+
+## 语法
+
+### shell 系统变量
+
+| 变量 | 说明                      |
+| ---- | ------------------------- |
+| `$$` | 获取当前 shell 进程的 pid |
+|      |                           |
+|      |                           |
+

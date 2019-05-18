@@ -413,13 +413,57 @@ getopt 的运行涉及到全局变量：optind, optarg
 
 #### 内存泄漏导致 OOM （out of memory）
 
+- **OOM**
+
+  当系统的物理内存不足时（注意时物理内存，不是虚拟内存），kernel 会调用 oom-killer，杀掉一些进程释放物理内存。
+
+  * 选择要终止的程序
+
+    oom-killer 会检查所有程序，并进行评分，来决定要终止哪些程序
+
+  * **oom_adj**
+
+    oom-killer 在计算程序的评分时，会使用到 oom_adj 作为评分系数：oom_adj 越大，程序越容器被 oom-killer 杀掉
+
+    > /proc/{pid} 目录下有几个和 oom 相关的文件
+    >
+    > * oom_adj: oom 评分调节系数。可修改。值越大，程序越容易被 oom-killer 杀掉
+    > * oom_score: oom 原始评分
+    > * oom_score_adj: 调节后的 oom 评分
+
+  * oom-killer 配置
+
+    * 禁用某个程序的 oom kill
+
+      echo -17 > /proc/$PID/oom_adj
+
+      > -17 是内核定义的表示禁用 OOM 的值。和内核实现相关
+
+    * /proc/sys/kernel/panic
+    
+      触发 oom-killer 后，多久重启系统。可修改。默认 0，表示不重启
+
+- **/var/log/messages**
+
+  如果发生 OOM，kernel 会通过 oom-killer 杀掉程序，释放物理内存。在系统日志里会有类似如下格式的日志
+
+  > kernel: MemTest invoked oom-killer: gfp_mask=0x24000c0, order=0, oom_score_adj=-998
+  >
+  > >MemTest: 被 oom-killer 终止的程序
+
+- **dmesg**
+
+  dmesg 用于控制内核环形缓冲区（kernel ring buffer）
+
+  `dmesg|grep kill` 同样可以用于查找 OOM 日志。dmesg 内容可能很多，建议先查找系统日志 /var/log/messages
+
+#### cgroup oom
+
 #### 栈溢出
 
 #### 堆溢出
 
 #### 系统日志分析
-
-* dmesg
 
 ## 易错场景
 
@@ -546,4 +590,21 @@ getopt 的运行涉及到全局变量：optind, optarg
 
       e.g.：
 
-      ```cpp
+      ```cpp
+      long double pi = 3.1415;
+      
+      int a{pi}; //编译器会报错：使用了初始化列表，用浮点数值初始化整数值，可能导致精度损失
+      
+      int b(pi); //编译器不会报错：会进行隐式类型转换，并且信息发生丢失（精度损失）
+      int c = pi; //编译器不会报错：会进行隐式类型转换，并且信息发生丢失（精度损失）
+      ```
+
+    * 语法
+
+  * 默认初始化：default initialized
+
+    定义于任何函数体之外的变量，会被初始化为0
+
+  * 未初始化：uninitialized
+
+    **定义在函数体内部的内置
